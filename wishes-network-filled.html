@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .scroll-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0;
+      position: relative;
+    }
+
+    .scroll-row {
+      white-space: nowrap;
+      font-size: 5vh; /* Reduced from 7vh to fit more rows */
+      line-height: 5vh; /* Reduced from 8.33vh */
+      font-weight: 900;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+      height: 5vh; /* Reduced to match line-height */
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin: 0.5vh 0; /* Added small margin between rows */
+    }
+
+    .wish-container {
+      display: inline-block;
+      margin-right: 150px;
+      position: relative;
+      cursor: pointer;
+      transition: color 0.3s ease;
+      z-index: 2;
+    }
+
+    .wish-container:hover::after {
+      content: attr(data-location);
+      position: absolute;
+      right: -100px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ff1493;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .scroll-text {
+      display: inline-block;
+      animation: scroll 300s linear infinite;
+      letter-spacing: 0.02em;
+      position: relative;
+    }
+
+    #connection-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.8;
+    }
+
+    @keyframes scroll {
+      from {
+        transform: translateX(100vw);
+      }
+      to {
+        transform: translateX(-200%);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="connection-canvas"></canvas>
+  <div class="scroll-container" id="container"></div>
+
+  <script>
+    const wishes = [
+      { text: "I wish to go to the beach.", location: "Manchester" },
+      { text: "I wish I could fly.", location: "Manchester" },
+      { text: "I wish I could build a clone to take care of my academic requirements.", location: "Manchester" },
+      { text: "I wish I had the superpower to bring all my brilliant ideas to life.", location: "Manchester" },
+      { text: "Umm over time to be self-sufficient in terms of majorly finance but also have a family that I have made myself.", location: "Mumbai" },
+      { text: "I wish i could change the USA Election results :)", location: "Manchester" },
+      { text: "I wish to be fit.", location: "Pune" },
+      { text: "i wish I can act on the things I want to do", location: "Virar" },
+      { text: "Factory and business.", location: "Mumbai" },
+      { text: "I wish to be able to travel the world a lot, balancing work, personal health and social life.", location: "Seoul" },
+      { text: "To be a registered architect in the uk and start a practice", location: "Manchester" },
+      { text: "I would love to live with my loved ones, job, have a firm, and 2 small business. :)", location: "Delft" },
+      { text: "To live alone independently in a small apartment with many plants and cats", location: "Mumbai" },
+      { text: "I wish to travel whole world someday with my own earning & meet new people.", location: "Pimpalner" },
+      { text: "I want to get super lean before my trip this march", location: "Chennai" },
+      { text: "To live a happy content peaceful life.", location: "Los Angeles" },
+      { text: "I wish to have CA credentials before my name", location: "Thane" },
+      { text: "I wish I graduate as a successful Engineer", location: "Delft" },
+      { text: "I aim to take things slow and steady.", location: "Delft" },
+      { text: "To become a good skillful physiotherapist", location: "Mumbai" },
+      { text: "I wish I can become better and gain my energy back soon", location: "Mumbai" },
+      { text: "To be happy forever", location: "Manchester" },
+      { text: "It is my ambition to give my family a beautiful life", location: "Mumbai" },
+      { text: "I wish I could start working on time", location: "Manchester" },
+      { text: "I wish to become more discipline and curious about everyday little things", location: "Mumbai" },
+      { text: "To work in Formula 1, one day.", location: "Delft" },
+      { text: "I have a stable business, a cozy comfortable home", location: "Mumbai" },
+      { text: "I wish to really help people and help them get better.", location: "Colchester" },
+      { text: "I wish to have a good night sleep", location: "Kudal" },
+      { text: "Build a new business from scratch", location: "Budapest" }
+    ];
+
+    const brightColors = [
+      '#FF1493', '#00FF00', '#FFD700', '#FF4500', '#00FFFF',
+      '#FF00FF', '#FFFF00', '#FF69B4', '#00FF7F', '#FF6347',
+      '#7FFFD4', '#FFA500', '#40E0D0', '#9370DB', '#32CD32'
+    ];
+
+    const container = document.getElementById('container');
+    const canvas = document.getElementById('connection-canvas');
+    const ctx = canvas.getContext('2d');
+    let wishElements = [];
+    let hoveredLocation = null;
+    let currentColor = 'rgba(255, 255, 255, 0.6)';
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function getRandomColor() {
+      return brightColors[Math.floor(Math.random() * brightColors.length)];
+    }
+
+    function createWishElements() {
+      wishElements = [];
+      // Increased from 12 to 18 rows
+      for (let i = 0; i < 18; i++) {
+        const row = document.createElement('div');
+        row.className = 'scroll-row';
+        row.style.animationDelay = `${i * 0.3}s`; // Reduced delay between rows
+        
+        const scrollText = document.createElement('div');
+        scrollText.className = 'scroll-text';
+        scrollText.style.animationDelay = `${i * -10}s`; // Adjusted scroll speed
+        
+        const rowWishes = [];
+        // Increased number of wishes per row
+        for (let j = 0; j < 10; j++) {
+          const randomWish = wishes[Math.floor(Math.random() * wishes.length)];
+          rowWishes.push(randomWish);
+        }
+        
+        rowWishes.forEach(wish => {
+          const wishContainer = document.createElement('span');
+          wishContainer.className = 'wish-container';
+          wishContainer.textContent = wish.text;
+          wishContainer.setAttribute('data-location', wish.location);
+          
+          wishContainer.addEventListener('mouseenter', (e) => {
+            const color = getRandomColor();
+            e.target.style.color = color;
+            hoveredLocation = wish.location;
+            currentColor = color;
+          });
+          
+          wishContainer.addEventListener('mouseleave', (e) => {
+            e.target.style.color = 'white';
+            hoveredLocation = null;
+            currentColor = 'rgba(255, 255, 255, 0.6)';
+          });
+          
+          wishElements.push({
+            element: wishContainer,
+            location: wish.location
+          });
+          
+          scrollText.appendChild(wishContainer);
+        });
+        
+        row.appendChild(scrollText);
+        container.appendChild(row);
+      }
+    }
+
+    function drawConnections() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = hoveredLocation ? currentColor : 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 3;
+
+      const locations = {};
+      
+      wishElements.forEach(wish => {
+        const rect = wish.element.getBoundingClientRect();
+        const center = {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        };
+        
+        if (!locations[wish.location]) {
+          locations[wish.location] = [];
+        }
+        locations[wish.location].push(center);
+      });
+
+      Object.entries(locations).forEach(([location, points]) => {
+        if (points.length > 1) {
+          if (hoveredLocation === location) {
+            ctx.strokeStyle = currentColor;
+            ctx.shadowColor = currentColor;
+            ctx.lineWidth = 4;
+          } else if (hoveredLocation) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 2;
+          } else {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 3;
+          }
+
+          for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+              const distance = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
+              if (distance < 500) {
+                ctx.beginPath();
+                ctx.moveTo(points[i].x, points[i].y);
+                ctx.lineTo(points[j].x, points[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+      });
+
+      requestAnimationFrame(drawConnections);
+    }
+
+    createWishElements();
+    drawConnections();
+  </script>
+</body>
+</html>
